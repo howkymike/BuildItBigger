@@ -19,8 +19,6 @@ Widget displays ingredient list for desired recipe.
 ### Display jokes
 App retrieves jokes from Google Cloud Endpoints module and displays them via an Activity from the Android Library. Note that the GCE module need only be deployed locally.
 
-### App Navigation
-App should allow navigation between individual recipes and recipe steps.
 
 ## License
 ```php

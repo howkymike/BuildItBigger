@@ -20,3 +20,13 @@ allprojects {
         google()
     }
 }
+
+
+task makeItRain {
+    dependsOn ":backend:appengineStart"
+    dependsOn ":app:connectedAndroidTest"
+    println "App Engine started & test completed"
+    finalizedBy ":backend:appengineStop"
+}
+
+makeItRain

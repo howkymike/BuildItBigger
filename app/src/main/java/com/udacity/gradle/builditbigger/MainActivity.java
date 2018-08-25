@@ -4,6 +4,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.annotation.VisibleForTesting;
+import android.support.test.espresso.IdlingResource;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Pair;
 import android.view.Menu;
@@ -17,6 +21,7 @@ import com.google.api.client.googleapis.services.AbstractGoogleClientRequest;
 import com.google.api.client.googleapis.services.GoogleClientRequestInitializer;
 import com.howky.mike.displayjoke.JokeActivity;
 import com.howky.mike.libjokeprovider.JokeProvider;
+import com.udacity.gradle.builditbigger.IdlingResource.SimpleIdlingResource;
 import com.udacity.gradle.builditbigger.backend.myApi.MyApi;
 
 import java.io.IOException;
@@ -24,10 +29,30 @@ import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
 
+    // The Idling Resource which will be null in production.
+    @Nullable
+    public static SimpleIdlingResource mIdlingResource;
+
+    /**
+     * Only called from test, creates and returns a new {@link SimpleIdlingResource}.
+     */
+    @VisibleForTesting
+    @NonNull
+    public IdlingResource getIdlingResource() {
+        if (mIdlingResource == null) {
+            mIdlingResource = new SimpleIdlingResource();
+        }
+        return mIdlingResource;
+    }
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Get the IdlingResource instance
+        getIdlingResource();
     }
 
 
@@ -60,6 +85,9 @@ public class MainActivity extends AppCompatActivity {
         String joke = jokeProvider.getJoke();
         Toast.makeText(this, joke, Toast.LENGTH_LONG).show();
 
+        if (mIdlingResource != null) {
+            mIdlingResource.setIdleState(false);
+        }
         // GCE module (backend)
         new EndpointsAsyncTask().execute(new Pair<Context, String>(this, joke));
 
@@ -88,7 +116,7 @@ class EndpointsAsyncTask extends AsyncTask<Pair<Context, String>, Void, String> 
                     .setRootUrl("http://10.0.2.2:8080/_ah/api/")
                     .setGoogleClientRequestInitializer(new GoogleClientRequestInitializer() {
                         @Override
-                        public void initialize(AbstractGoogleClientRequest<?> abstractGoogleClientRequest) throws IOException {
+                        public void initialize(AbstractGoogleClientRequest<?> abstractGoogleClientRequest) {
                             abstractGoogleClientRequest.setDisableGZipContent(true);
                         }
                     });
@@ -110,5 +138,9 @@ class EndpointsAsyncTask extends AsyncTask<Pair<Context, String>, Void, String> 
     @Override
     protected void onPostExecute(String result) {
         Toast.makeText(context, result, Toast.LENGTH_LONG).show();
+
+        if (MainActivity.mIdlingResource != null) {
+            MainActivity.mIdlingResource.setIdleState(true);
+        }
     }
 }

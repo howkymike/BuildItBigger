@@ -15,7 +15,7 @@ public class JokeProvider {
 
     public String getJoke() {
         Random random = new Random();
-        int index = random.nextInt(5);
+        int index = random.nextInt(jokesBase.length);
         return jokesBase[index];
     }
 

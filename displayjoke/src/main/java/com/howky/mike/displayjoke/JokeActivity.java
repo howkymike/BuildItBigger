@@ -9,7 +9,7 @@ public class JokeActivity extends AppCompatActivity {
 
     public static final String INTENT_JOKE = "intent_joke";
 
-    private String mJoke;
+    public String mJoke;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

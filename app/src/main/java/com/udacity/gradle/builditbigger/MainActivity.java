@@ -109,7 +109,7 @@ class EndpointsAsyncTask extends AsyncTask<Context, Void, String> {
         }
 
         try {
-            return myApiService.sayHi(joke).execute().getData();
+            return myApiService.sayHi("Hi").execute().getData();
         } catch (IOException e) {
             return e.getMessage();
         }
@@ -117,7 +117,7 @@ class EndpointsAsyncTask extends AsyncTask<Context, Void, String> {
 
     @Override
     protected void onPostExecute(String result) {
-      //  Toast.makeText(context, joke, Toast.LENGTH_LONG).show();
+     //   Toast.makeText(context, joke, Toast.LENGTH_LONG).show();
 
         Toast.makeText(context, result, Toast.LENGTH_LONG).show();
 
@@ -126,7 +126,7 @@ class EndpointsAsyncTask extends AsyncTask<Context, Void, String> {
         }
 
         Intent jokeActivityIntent = new Intent(context, JokeActivity.class);
-        jokeActivityIntent.putExtra(JokeActivity.INTENT_JOKE, result);
+        jokeActivityIntent.putExtra(JokeActivity.INTENT_JOKE, joke);
         context.startActivity(jokeActivityIntent);
     }
 }

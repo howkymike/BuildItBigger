@@ -4,7 +4,7 @@ import java.util.Random;
 
 public class JokeProvider {
     private static final String[] jokesBase = {
-            " Anton, do you think I’m a bad mother?\n" +
+            " Anton, do you think I am a bad mother?\n" +
                     "\n" +
                     "My name is Paul.",
             "My dog used to chase people on a bike a lot. It got so bad, finally I had to take his bike away.",

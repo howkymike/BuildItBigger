@@ -9,7 +9,6 @@ import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.support.test.espresso.IdlingResource;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Pair;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -29,7 +28,6 @@ import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
 
-    // The Idling Resource which will be null in production.
     @Nullable
     public static SimpleIdlingResource mIdlingResource;
 
@@ -45,32 +43,23 @@ public class MainActivity extends AppCompatActivity {
         return mIdlingResource;
     }
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Get the IdlingResource instance
         getIdlingResource();
     }
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         }
@@ -79,34 +68,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void tellJoke(View view) {
-
-        // joke provider (libJOkeProvider)
-        JokeProvider jokeProvider = new JokeProvider();
-        String joke = jokeProvider.getJoke();
-        Toast.makeText(this, joke, Toast.LENGTH_LONG).show();
-
         if (mIdlingResource != null) {
             mIdlingResource.setIdleState(false);
         }
+
         // GCE module (backend)
-        new EndpointsAsyncTask().execute(new Pair<Context, String>(this, joke));
-
-        // android jokeActivity (displayjoke)
-        Intent jokeActivityIntent = new Intent(this, JokeActivity.class);
-        jokeActivityIntent.putExtra(JokeActivity.INTENT_JOKE, joke);
-        startActivity(jokeActivityIntent);
-
+        new EndpointsAsyncTask().execute(this);
     }
-
-
 }
 
-class EndpointsAsyncTask extends AsyncTask<Pair<Context, String>, Void, String> {
+
+class EndpointsAsyncTask extends AsyncTask<Context, Void, String> {
     private static MyApi myApiService = null;
     private Context context;
+    private String joke;
 
     @Override
-    protected String doInBackground(Pair<Context, String>... params) {
+    protected String doInBackground(Context... params) {
+
+        context = params[0];
+
+        JokeProvider jokeProvider = new JokeProvider();
+        joke = jokeProvider.getJoke();
+
         if(myApiService == null) {  // Only do this once
             MyApi.Builder builder = new MyApi.Builder(AndroidHttp.newCompatibleTransport(),
                     new AndroidJsonFactory(), null)
@@ -121,15 +105,11 @@ class EndpointsAsyncTask extends AsyncTask<Pair<Context, String>, Void, String> 
                         }
                     });
             // end options for devappserver
-
             myApiService = builder.build();
         }
 
-        context = params[0].first;
-        String name = params[0].second;
-
         try {
-            return myApiService.sayHi(name).execute().getData();
+            return myApiService.sayHi(joke).execute().getData();
         } catch (IOException e) {
             return e.getMessage();
         }
@@ -137,10 +117,16 @@ class EndpointsAsyncTask extends AsyncTask<Pair<Context, String>, Void, String> 
 
     @Override
     protected void onPostExecute(String result) {
+      //  Toast.makeText(context, joke, Toast.LENGTH_LONG).show();
+
         Toast.makeText(context, result, Toast.LENGTH_LONG).show();
 
         if (MainActivity.mIdlingResource != null) {
             MainActivity.mIdlingResource.setIdleState(true);
         }
+
+        Intent jokeActivityIntent = new Intent(context, JokeActivity.class);
+        jokeActivityIntent.putExtra(JokeActivity.INTENT_JOKE, result);
+        context.startActivity(jokeActivityIntent);
     }
 }

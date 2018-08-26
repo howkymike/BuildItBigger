@@ -13,18 +13,21 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import static android.support.test.espresso.matcher.ViewMatchers.assertThat;
-import static com.google.common.base.Predicates.containsPattern;
+import static android.support.test.espresso.Espresso.onView;
+import static android.support.test.espresso.assertion.ViewAssertions.matches;
+import static android.support.test.espresso.matcher.ViewMatchers.withId;
+import static android.support.test.espresso.matcher.ViewMatchers.withSubstring;
+import static android.support.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.hamcrest.core.IsNot.not;
 
 
 // @RunWith is required only if you use a mix of JUnit3 and JUnit4.
 @RunWith(AndroidJUnit4.class)
 public class MainAsyncTaskTest {
 
-    private static final String STRING_TO_BE_SHOWED = "Time flies like an arrow, fruit flies like a banana.";
     private IdlingResource mIdlingResource;
 
     @Rule
@@ -35,9 +38,6 @@ public class MainAsyncTaskTest {
 
     @Before
     public void registerIdlingResource() {
-//        Fragment fragment = new FragmentLogin();
-//        mActivityRule.getActivity().setFragment(fragment);
-//        IdlingRegistry.getInstance().register(EspressoIdlingResouce.getIdlingResource());
         mIdlingResource = mActivityTestRule.getActivity().getIdlingResource();
         IdlingRegistry.getInstance().register(mIdlingResource);
 
@@ -54,5 +54,7 @@ public class MainAsyncTaskTest {
     @Test
     public void test() {
         assertThat(mActivityJokeTestRule.getActivity().mJoke, is(not(equalTo(""))));
+        onView(withId(R.id.joke_activity_tv))
+                .check(matches(not(withSubstring("failed to connect to"))));
     }
 }

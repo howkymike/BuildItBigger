@@ -66,9 +66,10 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'com.android.support:support-v4:27.1.1'
+    implementation 'com.android.support:animated-vector-drawable:27.1.1'
+    implementation 'com.android.support:customtabs:27.1.1'
     endpointsServer project(path: ':backend', configuration: 'endpoints')
     implementation project(':displayjoke')
-    implementation project(':libJokeProvider')
 
     implementation 'com.android.support:appcompat-v7:27.1.1'
     freeImplementation 'com.google.android.gms:play-services-ads:15.0.1'

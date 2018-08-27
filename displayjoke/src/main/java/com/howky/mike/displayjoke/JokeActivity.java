@@ -22,7 +22,9 @@ public class JokeActivity extends AppCompatActivity {
         }
 
         Intent receivedIntent = getIntent();
-        mJoke = receivedIntent.getStringExtra(INTENT_JOKE);
+        if (receivedIntent.hasExtra(INTENT_JOKE)) {
+            mJoke = receivedIntent.getStringExtra(INTENT_JOKE);
+        }
 
         TextView jokeTv = findViewById(R.id.joke_activity_tv);
         jokeTv.setText(mJoke);

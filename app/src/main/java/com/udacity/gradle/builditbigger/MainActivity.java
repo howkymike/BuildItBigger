@@ -1,6 +1,5 @@
 package com.udacity.gradle.builditbigger;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -19,11 +18,11 @@ import com.google.api.client.extensions.android.json.AndroidJsonFactory;
 import com.google.api.client.googleapis.services.AbstractGoogleClientRequest;
 import com.google.api.client.googleapis.services.GoogleClientRequestInitializer;
 import com.howky.mike.displayjoke.JokeActivity;
-import com.howky.mike.libjokeprovider.JokeProvider;
 import com.udacity.gradle.builditbigger.IdlingResource.SimpleIdlingResource;
 import com.udacity.gradle.builditbigger.backend.myApi.MyApi;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -73,60 +72,62 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // GCE module (backend)
-        new EndpointsAsyncTask().execute(this);
-    }
-}
-
-
-class EndpointsAsyncTask extends AsyncTask<Context, Void, String> {
-    private static MyApi myApiService = null;
-    private Context context;
-    private String joke;
-
-    @Override
-    protected String doInBackground(Context... params) {
-
-        context = params[0];
-
-        JokeProvider jokeProvider = new JokeProvider();
-        joke = jokeProvider.getJoke();
-
-        if(myApiService == null) {  // Only do this once
-            MyApi.Builder builder = new MyApi.Builder(AndroidHttp.newCompatibleTransport(),
-                    new AndroidJsonFactory(), null)
-                    // options for running against local devappserver
-                    // - 10.0.2.2 is localhost's IP address in Android emulator
-                    // - turn off compression when running against local devappserver
-                    .setRootUrl("http://10.0.2.2:8080/_ah/api/")
-                    .setGoogleClientRequestInitializer(new GoogleClientRequestInitializer() {
-                        @Override
-                        public void initialize(AbstractGoogleClientRequest<?> abstractGoogleClientRequest) {
-                            abstractGoogleClientRequest.setDisableGZipContent(true);
-                        }
-                    });
-            // end options for devappserver
-            myApiService = builder.build();
-        }
-
-        try {
-            return myApiService.sayHi("Hi").execute().getData();
-        } catch (IOException e) {
-            return e.getMessage();
-        }
+        new EndpointsAsyncTask(this).execute();
     }
 
-    @Override
-    protected void onPostExecute(String result) {
-     //   Toast.makeText(context, joke, Toast.LENGTH_LONG).show();
 
-        Toast.makeText(context, result, Toast.LENGTH_LONG).show();
+    private static class EndpointsAsyncTask extends AsyncTask<WeakReference, Void, String> {
+        private static MyApi myApiService = null;
 
-        if (MainActivity.mIdlingResource != null) {
-            MainActivity.mIdlingResource.setIdleState(true);
+        private WeakReference<MainActivity> activityReference;
+        EndpointsAsyncTask(MainActivity context) {
+            activityReference = new WeakReference<>(context);
         }
 
-        Intent jokeActivityIntent = new Intent(context, JokeActivity.class);
-        jokeActivityIntent.putExtra(JokeActivity.INTENT_JOKE, joke);
-        context.startActivity(jokeActivityIntent);
+        @Override
+        protected String doInBackground(WeakReference... params) {
+
+            if(myApiService == null) {  // Only do this once
+                MyApi.Builder builder = new MyApi.Builder(AndroidHttp.newCompatibleTransport(),
+                        new AndroidJsonFactory(), null)
+                        // options for running against local devappserver
+                        // - 10.0.2.2 is localhost's IP address in Android emulator
+                        // - turn off compression when running against local devappserver
+                        .setRootUrl("http://10.0.2.2:8080/_ah/api/")
+                        .setGoogleClientRequestInitializer(new GoogleClientRequestInitializer() {
+                            @Override
+                            public void initialize(AbstractGoogleClientRequest<?> abstractGoogleClientRequest) {
+                                abstractGoogleClientRequest.setDisableGZipContent(true);
+                            }
+                        });
+                // end options for devappserver
+                myApiService = builder.build();
+            }
+
+            try {
+                return myApiService.sayHi("Hi").execute().getData();
+            } catch (IOException e) {
+                return e.getMessage();
+            }
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            MainActivity activityContext = activityReference.get();
+
+            Toast.makeText(activityContext, result, Toast.LENGTH_LONG).show();
+
+            if (MainActivity.mIdlingResource != null) {
+                try {
+                    MainActivity.mIdlingResource.setIdleState(true);
+                } catch (NullPointerException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            Intent jokeActivityIntent = new Intent(activityContext, JokeActivity.class);
+            jokeActivityIntent.putExtra(JokeActivity.INTENT_JOKE, result);
+            activityContext.startActivity(jokeActivityIntent);
+        }
     }
 }
